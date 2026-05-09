@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
@@ -7,7 +7,9 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { DocumentsModule } from './documents/documents.module';
 import { ExercisesModule } from './exercises/exercises.module';
+import { AdminModule } from './admin/admin.module';
 import { validate } from './common/config/env.validation';
+import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 
 @Module({
   imports: [
@@ -25,13 +27,20 @@ import { validate } from './common/config/env.validation';
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: process.env.NODE_ENV !== 'production', // IMPORTANT: false in production
       logging: process.env.NODE_ENV === 'development',
+      retryAttempts: 5,
+      retryDelay: 3000,
     }),
     UsersModule,
     AuthModule,
     DocumentsModule,
     ExercisesModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RequestIdMiddleware).forRoutes('*');
+  }
+}

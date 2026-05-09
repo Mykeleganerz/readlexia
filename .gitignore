@@ -8,3 +8,6 @@ dist/
 "@ | Out-File -FilePath .gitignore -Encoding UTF8
 
 git add .gitignore
+
+ERROR_HANDLING_IMPROVEMENTS.md
+ERROR_HANDLING_QUICK_REFERENCE.md

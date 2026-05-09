@@ -1,10 +1,11 @@
 import { useAuth } from '../contexts/AuthContext';
 import { Navigation } from '../components/Navigation';
 import { Users, BarChart3, MessageSquare, Info } from 'lucide-react';
-import { Navigate, Link } from 'react-router-dom';
+import { Navigate, Link, useNavigate } from 'react-router-dom';
 
 export function AdminDashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   if (user?.role !== 'admin') {
     return <Navigate to="/dashboard" replace />;
@@ -48,7 +49,10 @@ export function AdminDashboard() {
               Track feature usage (e.g., most used fonts) to inform future
               updates.
             </p>
-            <button className="text-green-600 font-semibold hover:underline">
+            <button
+              onClick={() => navigate('/admin/analytics')}
+              className="text-green-600 font-semibold hover:underline"
+            >
               View Analytics &rarr;
             </button>
           </div>
@@ -63,7 +67,10 @@ export function AdminDashboard() {
             <p className="text-gray-600 mb-4">
               Address user issues submitted via the Help module.
             </p>
-            <button className="text-purple-600 font-semibold hover:underline">
+            <button
+              onClick={() => navigate('/admin/support-tickets')}
+              className="text-purple-600 font-semibold hover:underline"
+            >
               View Tickets &rarr;
             </button>
           </div>
@@ -78,7 +85,10 @@ export function AdminDashboard() {
             <p className="text-gray-600 mb-4">
               Manage tutorials and direct admin troubleshooting channels.
             </p>
-            <button className="text-yellow-600 font-semibold hover:underline">
+            <button
+              onClick={() => navigate('/admin/help')}
+              className="text-yellow-600 font-semibold hover:underline"
+            >
               Manage Content &rarr;
             </button>
           </div>

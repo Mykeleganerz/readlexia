@@ -10,6 +10,9 @@ import { Settings } from './pages/Settings';
 import { Help } from './pages/Help';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { AdminUserManagement } from './pages/AdminUserManagement';
+import { AdminAnalytics } from './pages/AdminAnalytics';
+import { AdminSupportTickets } from './pages/AdminSupportTickets';
+import { AdminHelpManagement } from './pages/AdminHelpManagement';
 import { ExerciseSelector } from './pages/ExerciseSelector';
 import { ExercisePage } from './pages/ExercisePage';
 import { ExerciseResults } from './pages/ExerciseResults';
@@ -33,6 +36,30 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <AdminUserManagement />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admin/analytics',
+    element: (
+      <ProtectedRoute>
+        <AdminAnalytics />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admin/support-tickets',
+    element: (
+      <ProtectedRoute>
+        <AdminSupportTickets />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admin/help',
+    element: (
+      <ProtectedRoute>
+        <AdminHelpManagement />
       </ProtectedRoute>
     ),
   },

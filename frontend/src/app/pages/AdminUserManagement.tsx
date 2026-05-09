@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Navigation } from '../components/Navigation';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { usersService, User as ApiUser } from '../../services/users.service';
+import { errorLogger, errorNotificationManager } from '../../utils/errorLogger';
 
 export function AdminUserManagement() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [users, setUsers] = useState<ApiUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   if (user?.role !== 'admin') {
     return <Navigate to="/dashboard" replace />;
@@ -19,10 +22,18 @@ export function AdminUserManagement() {
 
   const loadUsers = async () => {
     try {
+      setLoading(true);
+      setError(null);
+      errorLogger.info('Loading admin users');
       const data = await usersService.getAll();
       setUsers(data);
-    } catch (error) {
-      console.error('Failed to load users:', error);
+      errorLogger.info('Users loaded successfully', { count: data.length });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to load users';
+      errorLogger.error(`Failed to load users: ${message}`);
+      setError(message);
+      errorNotificationManager.error('Failed to load users');
     } finally {
       setLoading(false);
     }
@@ -30,26 +41,40 @@ export function AdminUserManagement() {
 
   const toggleSuspend = async (userId: number, isSuspended: boolean) => {
     try {
+      errorLogger.info('Toggling user suspend status', { userId, isSuspended });
       await usersService.update(userId, { isSuspended: !isSuspended });
       setUsers(
         users.map((u) =>
           u.id === userId ? { ...u, isSuspended: !isSuspended } : u,
         ),
       );
-    } catch (error) {
-      console.error('Failed to suspend/unsuspend user:', error);
+      errorLogger.info('User suspend status updated');
+      errorNotificationManager.success(
+        `User ${isSuspended ? 'unsuspended' : 'suspended'}`,
+      );
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to suspend/unsuspend user';
+      errorLogger.error(`Failed to update user suspension: ${message}`);
+      errorNotificationManager.error('Failed to update user suspension');
     }
   };
 
   const toggleRole = async (userId: number, currentRole: string) => {
     try {
       const newRole = currentRole === 'admin' ? 'user' : 'admin';
+      errorLogger.info('Updating user role', { userId, newRole });
       await usersService.update(userId, { role: newRole });
       setUsers(
         users.map((u) => (u.id === userId ? { ...u, role: newRole } : u)),
       );
-    } catch (error) {
-      console.error('Failed to update role:', error);
+      errorLogger.info('User role updated');
+      errorNotificationManager.success(`User role changed to ${newRole}`);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to update role';
+      errorLogger.error(`Failed to update user role: ${message}`);
+      errorNotificationManager.error('Failed to update user role');
     }
   };
 
@@ -59,7 +84,25 @@ export function AdminUserManagement() {
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-gray-800">User Management</h1>
+          <button
+            onClick={() => navigate('/admin')}
+            className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+          >
+            ← Back
+          </button>
         </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 mb-6">
+            <p className="font-semibold">Error loading users</p>
+            <button
+              onClick={loadUsers}
+              className="mt-3 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Retry
+            </button>
+          </div>
+        )}
 
         {loading ? (
           <p>Loading users...</p>

@@ -1,6 +1,7 @@
 import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { tap, catchError } from 'rxjs/operators';
+import { throwError } from 'rxjs';
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
@@ -9,6 +10,7 @@ export class LoggingInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
     const { method, url } = request;
+    const requestId = request.id || 'unknown';
     const now = Date.now();
 
     return next.handle().pipe(
@@ -16,8 +18,16 @@ export class LoggingInterceptor implements NestInterceptor {
         const response = context.switchToHttp().getResponse();
         const delay = Date.now() - now;
         this.logger.log(
-          `${method} ${url} ${response.statusCode} - ${delay}ms`,
+          `[${requestId}] ${method} ${url} ${response.statusCode} - ${delay}ms`,
         );
+      }),
+      catchError((error) => {
+        const delay = Date.now() - now;
+        this.logger.error(
+          `[${requestId}] ${method} ${url} ERROR - ${delay}ms`,
+          error.stack,
+        );
+        return throwError(() => error);
       }),
     );
   }

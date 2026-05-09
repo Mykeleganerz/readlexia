@@ -16,6 +16,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
+    const requestId = request.id || 'unknown';
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Internal server error';
@@ -33,7 +34,15 @@ export class AllExceptionsFilter implements ExceptionFilter {
       }
     } else if (exception instanceof Error) {
       message = exception.message;
-      this.logger.error(exception.stack);
+      this.logger.error(
+        `[${requestId}] Unhandled Error: ${exception.message}`,
+        exception.stack,
+      );
+    } else {
+      this.logger.error(
+        `[${requestId}] Unknown exception type: ${typeof exception}`,
+        JSON.stringify(exception),
+      );
     }
 
     const errorResponse = {
@@ -42,14 +51,22 @@ export class AllExceptionsFilter implements ExceptionFilter {
       path: request.url,
       method: request.method,
       message,
+      requestId,
       ...(errors && { errors }),
     };
 
-    this.logger.error(
-      `${request.method} ${request.url} ${status} - ${message}`,
-      exception instanceof Error ? exception.stack : undefined,
-    );
+    // Log error with context
+    const logMessage = `[${requestId}] ${request.method} ${request.url} ${status} - ${message}`;
+    if (status >= 500) {
+      this.logger.error(
+        logMessage,
+        exception instanceof Error ? exception.stack : undefined,
+      );
+    } else if (status >= 400) {
+      this.logger.warn(logMessage);
+    }
 
     response.status(status).json(errorResponse);
   }
 }
+

@@ -1,4 +1,5 @@
 import apiClient from './api.service';
+import { errorLogger } from '../utils/errorLogger';
 
 export interface ExerciseQuestion {
     id: number;
@@ -43,19 +44,34 @@ export const exercisesService = {
         documentId: number,
         numberOfExercises: number,
     ): Promise<Exercise> {
-        const response = await apiClient.post('/exercises/generate', {
-            documentId,
-            numberOfExercises,
-        });
-        return response.data;
+        try {
+            errorLogger.info('Generating exercise', { documentId, numberOfExercises });
+            const response = await apiClient.post('/exercises/generate', {
+                documentId,
+                numberOfExercises,
+            });
+            errorLogger.info('Exercise generated', { exerciseId: response.data.id, questions: response.data.totalQuestions });
+            return response.data;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to generate exercise';
+            errorLogger.error(`Failed to generate exercise: ${message}`, { documentId, numberOfExercises });
+            throw error;
+        }
     },
 
     /**
      * Get exercise by ID
      */
     async getExercise(exerciseId: number): Promise<Exercise> {
-        const response = await apiClient.get(`/exercises/${exerciseId}`);
-        return response.data;
+        try {
+            errorLogger.info('Fetching exercise', { exerciseId });
+            const response = await apiClient.get(`/exercises/${exerciseId}`);
+            return response.data;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to fetch exercise';
+            errorLogger.error(`Failed to fetch exercise ${exerciseId}: ${message}`);
+            throw error;
+        }
     },
 
     /**
@@ -66,26 +82,50 @@ export const exercisesService = {
         questionId: number,
         userAnswer: string,
     ): Promise<ExerciseQuestion> {
-        const response = await apiClient.post(`/exercises/${exerciseId}/submit`, {
-            questionId,
-            userAnswer,
-        });
-        return response.data;
+        try {
+            errorLogger.info('Submitting exercise answer', { exerciseId, questionId });
+            const response = await apiClient.post(`/exercises/${exerciseId}/submit`, {
+                questionId,
+                userAnswer,
+            });
+            errorLogger.info('Exercise answer submitted', { isCorrect: response.data.isCorrect });
+            return response.data;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to submit answer';
+            errorLogger.error(`Failed to submit answer: ${message}`, { exerciseId, questionId });
+            throw error;
+        }
     },
 
     /**
      * Get exercise statistics
      */
     async getExerciseStats(exerciseId: number): Promise<ExerciseStats> {
-        const response = await apiClient.get(`/exercises/${exerciseId}/stats`);
-        return response.data;
+        try {
+            errorLogger.info('Fetching exercise stats', { exerciseId });
+            const response = await apiClient.get(`/exercises/${exerciseId}/stats`);
+            errorLogger.info('Exercise stats fetched', { score: response.data.scorePercentage });
+            return response.data;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to fetch exercise stats';
+            errorLogger.error(`Failed to fetch exercise stats for ${exerciseId}: ${message}`);
+            throw error;
+        }
     },
 
     /**
      * Get all user exercises
      */
     async getUserExercises(): Promise<Exercise[]> {
-        const response = await apiClient.get('/exercises');
-        return response.data;
+        try {
+            errorLogger.info('Fetching user exercises');
+            const response = await apiClient.get('/exercises');
+            errorLogger.info('User exercises fetched', { count: response.data.length });
+            return response.data;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to fetch exercises';
+            errorLogger.error(`Failed to fetch user exercises: ${message}`);
+            throw error;
+        }
     },
 };
