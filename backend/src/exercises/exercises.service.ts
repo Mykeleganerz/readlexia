@@ -41,36 +41,65 @@ export class ExercisesService {
     }
 
     /**
-     * Get phonemes from a word (simplified approach)
+     * Get phonemes from a word
+     * Simple, reliable phoneme extraction using consonant clusters
      */
     private getPhonemes(word: string): string[] {
-        // Simplified phoneme extraction - in production, use a phoneme dictionary
-        const vowels = 'aeiou';
-        const phonemes = [];
-        let current = '';
+        word = word.toLowerCase();
+        const phonemes: string[] = [];
+        const clusters = [
+            'th', 'sh', 'ch', 'ph', 'wh',
+            'str', 'scr', 'spr', 'spl', 'shr',
+            'st', 'sp', 'sk', 'sm', 'sn', 'sw',
+            'bl', 'br', 'cl', 'cr', 'dr', 'fl', 'fr', 'gl', 'gr', 'pl', 'pr', 'tr'
+        ];
+        let i = 0;
 
-        for (let i = 0; i < word.length; i++) {
-            current += word[i];
+        while (i < word.length) {
+            let found = false;
 
-            // Check if next character is a vowel and current contains a consonant
-            if (i + 1 < word.length) {
-                const nextIsVowel = vowels.includes(word[i + 1]);
-                const currentHasVowel = [...current].some((c) => vowels.includes(c));
-
-                if (nextIsVowel && currentHasVowel) {
-                    phonemes.push(current);
-                    current = '';
+            // Check for consonant clusters (sorted by length, longest first)
+            for (const cluster of clusters.sort((a, b) => b.length - a.length)) {
+                if (word.substr(i, cluster.length) === cluster) {
+                    phonemes.push(cluster);
+                    i += cluster.length;
+                    found = true;
+                    break;
                 }
             }
-        }
 
-        if (current) phonemes.push(current);
+            // If no cluster found, push single character
+            if (!found) {
+                phonemes.push(word[i]);
+                i++;
+            }
+        }
 
         return phonemes.length > 0 ? phonemes : word.split('');
     }
 
     /**
+     * Check if character at position i starts a consonant cluster
+     */
+    private isConsonantCluster(word: string, i: number): boolean {
+        if (i + 1 >= word.length) return false;
+        const consonantClusters = [
+            'st', 'sp', 'sk', 'sm', 'sn', 'sw',
+            'ch', 'sh', 'th', 'wh', 'ph',
+            'bl', 'br', 'cl', 'cr', 'dr', 'fl', 'fr', 'gl', 'gr', 'pl', 'pr', 'tr',
+            'scr', 'str', 'shr', 'spl', 'spr',
+        ];
+        for (const cluster of consonantClusters) {
+            if (word.substr(i, cluster.length) === cluster) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Generate phoneme segmentation exercise
+     * Makes it VERY clear what the user should select
      */
     private generatePhonemeSegmentation(
         word: string,
@@ -78,17 +107,40 @@ export class ExercisesService {
         const phonemes = this.getPhonemes(word);
         const phonemesStr = phonemes.join(' / ');
 
+        // Generate plausible wrong answers
+        const wrongAnswers: string[] = [];
+
+        // Wrong answer 1: Missing first phoneme
+        if (phonemes.length > 1) {
+            wrongAnswers.push(phonemes.slice(1).join(' / '));
+        }
+
+        // Wrong answer 2: Missing last phoneme
+        if (phonemes.length > 1) {
+            wrongAnswers.push(phonemes.slice(0, -1).join(' / '));
+        }
+
+        // Wrong answer 3: Mixed up order (if more than 2 phonemes)
+        if (phonemes.length > 2) {
+            const shuffled = [...phonemes].sort(() => Math.random() - 0.5);
+            wrongAnswers.push(shuffled.join(' / '));
+        } else if (wrongAnswers.length < 3) {
+            // Fallback: just the word itself (entire word as one unit)
+            wrongAnswers.push(word.toUpperCase());
+        }
+
+        // Create options with correct answer and unique wrong answers
+        const options = [phonemesStr, ...wrongAnswers]
+            .filter((v, i, a) => a.indexOf(v) === i) // Remove duplicates
+            .sort(() => Math.random() - 0.5)
+            .slice(0, 4);
+
         return {
             type: ExerciseType.PHONEME_SEGMENTATION,
-            question: `What are the sounds in the word "${word.toUpperCase()}"?`,
-            options: [
-                phonemesStr,
-                phonemes.slice(0, -1).join(' / '),
-                phonemes.slice(1).join(' / '),
-                (phonemes[0] + ' ' + phonemes.slice(1).join('/')).trim(),
-            ],
+            question: `Listen carefully: Break the word "${word.toUpperCase()}" into its individual sounds (phonemes). Which row shows the correct sounds?`,
+            options: options,
             correctAnswer: phonemesStr,
-            explanation: `The word "${word}" is broken into these sounds: ${phonemesStr}`,
+            explanation: `Perfect! The word "${word.toUpperCase()}" has ${phonemes.length} sound${phonemes.length > 1 ? 's' : ''}: ${phonemes.map((p, i) => `Sound ${i + 1} is "${p}"`).join(', ')}. When you say it normally: "${phonemes.join('-')}".`,
             sourceWord: word,
         };
     }
@@ -126,21 +178,37 @@ export class ExercisesService {
         const phonemes = this.getPhonemes(word);
         const phonemesStr = phonemes.join(' / ');
 
-        // Generate wrong answers
-        const wrongAnswers = [];
-        wrongAnswers.push(word.split('').reverse().join('')); // Reversed
-        wrongAnswers.push(word.slice(1) + word[0]); // First letter moved to end
+        // Generate plausible wrong answers
+        const wrongAnswers: string[] = [];
+
+        // Wrong answer 1: Reversed word
+        const reversed = word.split('').reverse().join('');
+        if (reversed !== word) {
+            wrongAnswers.push(reversed);
+        }
+
+        // Wrong answer 2: First letter moved to end
+        if (word.length > 1) {
+            wrongAnswers.push(word.slice(1) + word[0]);
+        }
+
+        // Wrong answer 3: Remove first letter
+        if (word.length > 1 && wrongAnswers.length < 3) {
+            wrongAnswers.push(word.slice(1));
+        }
 
         const options = [word, ...wrongAnswers]
-            .filter((_, i) => i < 4)
-            .sort(() => Math.random() - 0.5);
+            .filter((v, i, a) => a.indexOf(v) === i) // Remove duplicates
+            .sort(() => Math.random() - 0.5)
+            .slice(0, 4)
+            .map((opt) => opt.toUpperCase());
 
         return {
             type: ExerciseType.SOUND_BLENDING,
-            question: `Blend these sounds together: ${phonemesStr} = ?`,
-            options: options.map((opt) => opt.toUpperCase()),
+            question: `Listen to these sounds: ${phonemesStr}. Blend them together. What word do they make?`,
+            options: options,
             correctAnswer: word.toUpperCase(),
-            explanation: `When you blend ${phonemesStr}, you get "${word.toUpperCase()}".`,
+            explanation: `When you blend ${phonemesStr} together, you get "${word.toUpperCase()}".`,
             sourceWord: word,
         };
     }
@@ -163,10 +231,10 @@ export class ExercisesService {
 
         return {
             type: ExerciseType.LETTER_DISCRIMINATION,
-            question: `What letter goes in place of "?" in: ${wordWithMissing.toUpperCase()}?`,
+            question: `What letter goes in place of "?" in: ${wordWithMissing.toUpperCase()}`,
             options: options,
-            correctAnswer: correctLetter,
-            explanation: `The correct letter is "${correctLetter.toUpperCase()}". The word is "${word.toUpperCase()}".`,
+            correctAnswer: correctLetter.toUpperCase(),
+            explanation: `The correct letter is "${correctLetter.toUpperCase()}". The complete word is "${word.toUpperCase()}".`,
             sourceWord: word,
         };
     }
@@ -193,38 +261,62 @@ export class ExercisesService {
             z: ['s', '2'],
         };
 
-        return similarMap[letter.toLowerCase()] || ['a', 'e', 'i'];
+        const similarLetters = similarMap[letter.toLowerCase()] || ['a', 'e', 'i'];
+        // Return uppercase versions to match options format
+        return similarLetters.map(l => l.toUpperCase());
     }
 
     /**
      * Generate syllable types exercise
+     * IMPORTANT: Always ensure correct answer is in the visible options
      */
     private generateSyllableTypes(word: string): Partial<ExerciseQuestion> {
         const syllableType = this.determineSyllableType(word);
 
+        const allOptions = [
+            'Open',
+            'Vowel Team',
+            'Controlled R',
+            'Closed',
+            'Silent E',
+        ];
+
+        // Remove the correct answer from the list
+        const otherOptions = allOptions.filter((opt) => opt !== syllableType);
+
+        // Shuffle and take 3 other options
+        const shuffledOthers = otherOptions
+            .sort(() => Math.random() - 0.5)
+            .slice(0, 3);
+
+        // Create final options: always include correct answer + 3 random others
+        const options = [syllableType, ...shuffledOthers]
+            .sort(() => Math.random() - 0.5); // Randomize position of correct answer
+
         return {
             type: ExerciseType.SYLLABLE_TYPES,
-            question: `What syllable pattern does "${word.toUpperCase()}" have?`,
-            options: [
-                syllableType,
-                'Open',
-                'Vowel Team',
-                'Controlled R',
-                'Closed',
-                'Silent E',
-            ]
-                .filter((v, i, a) => a.indexOf(v) === i)
-                .sort(() => Math.random() - 0.5)
-                .slice(0, 4),
+            question: `What syllable pattern does "${word.toUpperCase()}" follow?`,
+            options: options,
             correctAnswer: syllableType,
-            explanation: `"${word}" follows the ${syllableType} syllable pattern.`,
+            explanation: `The word "${word.toUpperCase()}" follows the **${syllableType}** syllable pattern. ${this.getSyllableExplanation(syllableType)}`,
             sourceWord: word,
         };
     }
 
     /**
-     * Determine syllable type
+     * Get detailed explanation for each syllable type
      */
+    private getSyllableExplanation(type: string): string {
+        const explanations = {
+            Open: 'Open syllables end with a vowel sound (like "go", "me", "no").',
+            Closed: 'Closed syllables end with a consonant sound (like "cat", "dog", "sit").',
+            'Silent E': 'Silent E syllables end with a silent "e" (like "make", "home", "bone").',
+            'Vowel Team': 'Vowel Team syllables have two vowels together (like "sea", "boat", "rain").',
+            'Controlled R': 'Controlled R syllables have a vowel followed by the letter "r" (like "car", "bird", "her").',
+            Schwa: 'Schwa syllables have a weak vowel sound (like "about", "sofa", "pencil").',
+        };
+        return explanations[type] || 'Syllable pattern.';
+    }
     private determineSyllableType(word: string): string {
         const vowels = 'aeiou';
         word = word.toLowerCase();
@@ -431,8 +523,10 @@ export class ExercisesService {
             throw new NotFoundException('Question not found');
         }
 
-        // Check answer
-        const isCorrect = userAnswer.toLowerCase().trim() === question.correctAnswer.toLowerCase().trim();
+        // Check answer (case-insensitive and trimmed)
+        const normalizedUserAnswer = userAnswer.toLowerCase().trim();
+        const normalizedCorrectAnswer = question.correctAnswer.toLowerCase().trim();
+        const isCorrect = normalizedUserAnswer === normalizedCorrectAnswer;
 
         // Update question
         question.userAnswer = userAnswer;
