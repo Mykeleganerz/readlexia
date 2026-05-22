@@ -3,11 +3,14 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { HelpContentService } from './admin/help-content.service';
+import { HelpContent } from './admin/help-content.entity';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { DocumentsModule } from './documents/documents.module';
 import { ExercisesModule } from './exercises/exercises.module';
 import { AdminModule } from './admin/admin.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { validate } from './common/config/env.validation';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 
@@ -30,14 +33,16 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
       retryAttempts: 5,
       retryDelay: 3000,
     }),
+    TypeOrmModule.forFeature([HelpContent]),
     UsersModule,
     AuthModule,
     DocumentsModule,
     ExercisesModule,
     AdminModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, HelpContentService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

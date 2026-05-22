@@ -2,23 +2,31 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Navigation } from '../components/Navigation';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { TrendingUp, Users, FileText, Zap } from 'lucide-react';
+import {
+  TrendingUp,
+  Users,
+  FileText,
+  BookOpen,
+  BarChart3,
+  Activity,
+} from 'lucide-react';
 import { errorLogger, errorNotificationManager } from '../../utils/errorLogger';
 import apiClient from '../../services/api.service';
 
 interface Analytics {
   totalUsers: number;
-  totalDocuments: number;
-  totalExercises: number;
   activeUsers: number;
+  newUsersLast7Days: number;
+  newUsersLast30Days: number;
+  totalDocuments: number;
+  newDocumentsLast7Days: number;
+  newDocumentsLast30Days: number;
+  totalExercises: number;
   totalWords: number;
   averageDocumentLength: number;
-  mostUsedFeature: string;
-  systemHealth: {
-    uptime: string;
-    avgResponseTime: number;
-    errorRate: number;
-  };
+  avgExercisesPerUser: number;
+  avgDocumentsPerUser: number;
+  categoryDistribution: Record<string, number>;
 }
 
 export function AdminAnalytics() {
@@ -103,14 +111,17 @@ export function AdminAnalytics() {
 
         {analytics && (
           <>
-            {/* Key Metrics */}
+            {/* Key Metrics - Core Stats */}
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               <div className="bg-white rounded-lg shadow p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-gray-600 text-sm">Total Users</p>
-                    <p className="text-2xl font-bold text-gray-800">
+                    <p className="text-3xl font-bold text-gray-800">
                       {analytics.totalUsers}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      +{analytics.newUsersLast7Days} this week
                     </p>
                   </div>
                   <Users className="text-blue-500" size={32} />
@@ -121,11 +132,12 @@ export function AdminAnalytics() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-gray-600 text-sm">Active Users</p>
-                    <p className="text-2xl font-bold text-gray-800">
+                    <p className="text-3xl font-bold text-gray-800">
                       {analytics.activeUsers}
                     </p>
+                    <p className="text-xs text-gray-500 mt-1">Last 30 days</p>
                   </div>
-                  <TrendingUp className="text-green-500" size={32} />
+                  <Activity className="text-green-500" size={32} />
                 </div>
               </div>
 
@@ -133,8 +145,11 @@ export function AdminAnalytics() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-gray-600 text-sm">Total Documents</p>
-                    <p className="text-2xl font-bold text-gray-800">
+                    <p className="text-3xl font-bold text-gray-800">
                       {analytics.totalDocuments}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      +{analytics.newDocumentsLast7Days} this week
                     </p>
                   </div>
                   <FileText className="text-purple-500" size={32} />
@@ -145,16 +160,76 @@ export function AdminAnalytics() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-gray-600 text-sm">Total Exercises</p>
-                    <p className="text-2xl font-bold text-gray-800">
+                    <p className="text-3xl font-bold text-gray-800">
                       {analytics.totalExercises}
                     </p>
+                    <p className="text-xs text-gray-500 mt-1">Completed</p>
                   </div>
-                  <Zap className="text-yellow-500" size={32} />
+                  <BookOpen className="text-yellow-500" size={32} />
                 </div>
               </div>
             </div>
 
-            {/* Detailed Metrics */}
+            {/* User Growth & Activity */}
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              <div className="bg-white rounded-lg shadow p-6">
+                <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                  <TrendingUp size={20} className="text-blue-600" />
+                  User Growth
+                </h2>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center pb-3 border-b">
+                    <span className="text-gray-600">New Users (7 days)</span>
+                    <span className="font-bold text-lg text-blue-600">
+                      {analytics.newUsersLast7Days}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center pb-3 border-b">
+                    <span className="text-gray-600">New Users (30 days)</span>
+                    <span className="font-bold text-lg text-blue-600">
+                      {analytics.newUsersLast30Days}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">
+                      Active Users (30 days)
+                    </span>
+                    <span className="font-bold text-lg text-green-600">
+                      {analytics.activeUsers}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow p-6">
+                <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                  <FileText size={20} className="text-purple-600" />
+                  Document Activity
+                </h2>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center pb-3 border-b">
+                    <span className="text-gray-600">Total Documents</span>
+                    <span className="font-bold text-lg text-purple-600">
+                      {analytics.totalDocuments}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center pb-3 border-b">
+                    <span className="text-gray-600">New Docs (7 days)</span>
+                    <span className="font-bold text-lg text-purple-600">
+                      {analytics.newDocumentsLast7Days}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">New Docs (30 days)</span>
+                    <span className="font-bold text-lg text-purple-600">
+                      {analytics.newDocumentsLast30Days}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Content Statistics */}
             <div className="grid md:grid-cols-2 gap-6 mb-8">
               <div className="bg-white rounded-lg shadow p-6">
                 <h2 className="text-lg font-bold text-gray-800 mb-4">
@@ -167,49 +242,83 @@ export function AdminAnalytics() {
                       {analytics.totalWords.toLocaleString()}
                     </span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between border-t pt-3">
                     <span className="text-gray-600">Avg Document Length</span>
                     <span className="font-semibold">
-                      {analytics.averageDocumentLength} words
+                      {analytics.averageDocumentLength.toLocaleString()} words
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Most Used Feature</span>
+                  <div className="flex justify-between border-t pt-3">
+                    <span className="text-gray-600">Avg Docs per User</span>
                     <span className="font-semibold">
-                      {analytics.mostUsedFeature}
+                      {analytics.avgDocumentsPerUser}
                     </span>
                   </div>
                 </div>
               </div>
 
               <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-lg font-bold text-gray-800 mb-4">
-                  System Health
+                <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                  <BarChart3 size={20} className="text-orange-600" />
+                  Exercise Activity
                 </h2>
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Uptime</span>
+                    <span className="text-gray-600">Total Exercises</span>
                     <span className="font-semibold">
-                      {analytics.systemHealth.uptime}
+                      {analytics.totalExercises}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Avg Response Time</span>
+                  <div className="flex justify-between border-t pt-3">
+                    <span className="text-gray-600">
+                      Avg Exercises per User
+                    </span>
                     <span className="font-semibold">
-                      {analytics.systemHealth.avgResponseTime}ms
+                      {analytics.avgExercisesPerUser}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Error Rate</span>
-                    <span
-                      className={`font-semibold ${analytics.systemHealth.errorRate > 1 ? 'text-red-600' : 'text-green-600'}`}
-                    >
-                      {analytics.systemHealth.errorRate.toFixed(2)}%
+                  <div className="flex justify-between border-t pt-3">
+                    <span className="text-gray-600">
+                      Total Users with Exercises
+                    </span>
+                    <span className="font-semibold">
+                      {analytics.totalExercises > 0
+                        ? Math.ceil(
+                            analytics.totalExercises /
+                              Math.max(analytics.avgExercisesPerUser, 1),
+                          )
+                        : 0}
                     </span>
                   </div>
                 </div>
               </div>
             </div>
+
+            {/* Category Distribution */}
+            {Object.keys(analytics.categoryDistribution).length > 0 && (
+              <div className="bg-white rounded-lg shadow p-6 mb-8">
+                <h2 className="text-lg font-bold text-gray-800 mb-4">
+                  Document Categories
+                </h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {Object.entries(analytics.categoryDistribution).map(
+                    ([category, count]) => (
+                      <div
+                        key={category}
+                        className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200"
+                      >
+                        <p className="text-sm font-semibold text-gray-700 mb-1 truncate">
+                          {category}
+                        </p>
+                        <p className="text-2xl font-bold text-blue-600">
+                          {count}
+                        </p>
+                      </div>
+                    ),
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Refresh Button */}
             <button
