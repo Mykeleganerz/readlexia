@@ -8,6 +8,7 @@ import { Reader } from './pages/Reader';
 import { Profile } from './pages/Profile';
 import { Settings } from './pages/Settings';
 import { Help } from './pages/Help';
+import { Notifications } from './pages/Notifications';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { AdminUserManagement } from './pages/AdminUserManagement';
 import { AdminAnalytics } from './pages/AdminAnalytics';
@@ -138,5 +139,13 @@ export const router = createBrowserRouter([
   {
     path: '/help',
     element: <Help />,
+  },
+  {
+    path: '/notifications',
+    element: (
+      <ProtectedRoute>
+        <Notifications />
+      </ProtectedRoute>
+    ),
   },
 ]);

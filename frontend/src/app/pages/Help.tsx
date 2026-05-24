@@ -1,7 +1,13 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Navigation } from '../components/Navigation';
+import { ContactSupportModal } from '../components/ContactSupportModal';
+import {
+  helpContentService,
+  HelpContent,
+} from '../../services/help-content.service';
+import { errorLogger } from '../../utils/errorLogger';
 import {
   Book,
   Eye,
@@ -14,12 +20,34 @@ import {
 export function Help() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [helpContent, setHelpContent] = useState<HelpContent[]>([]);
+  const [isLoadingHelp, setIsLoadingHelp] = useState(true);
 
   useEffect(() => {
     if (!user) {
       navigate('/login');
     }
   }, [user, navigate]);
+
+  useEffect(() => {
+    const fetchHelpContent = async () => {
+      try {
+        setIsLoadingHelp(true);
+        const content = await helpContentService.getAll();
+        setHelpContent(content);
+      } catch (error) {
+        errorLogger.error('Failed to fetch help content', { error });
+        // Fall back to default content if fetch fails
+      } finally {
+        setIsLoadingHelp(false);
+      }
+    };
+
+    if (user) {
+      fetchHelpContent();
+    }
+  }, [user]);
 
   if (!user) return null;
 
@@ -231,11 +259,23 @@ export function Help() {
             If you have additional questions or need personalized support,
             please don't hesitate to reach out.
           </p>
-          <button className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+          >
             Contact Support
           </button>
         </div>
       </div>
+
+      {/* Contact Support Modal */}
+      <ContactSupportModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={() => {
+          // Optional: Refresh help content or other actions after successful submission
+        }}
+      />
     </div>
   );
 }

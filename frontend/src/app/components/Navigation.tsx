@@ -9,6 +9,7 @@ import {
   User,
   LogOut,
   Shield,
+  Bell,
 } from 'lucide-react';
 
 export function Navigation() {
@@ -87,6 +88,18 @@ export function Navigation() {
           >
             <HelpCircle size={20} />
             <span>Help</span>
+          </Link>
+
+          <Link
+            to="/notifications"
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+              isActive('/notifications')
+                ? 'bg-blue-100 text-blue-700'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            <Bell size={20} />
+            <span>Notifications</span>
           </Link>
         </div>
 

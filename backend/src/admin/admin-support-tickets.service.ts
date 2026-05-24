@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SupportTicket } from './support-ticket.entity';
 import { User } from '../users/user.entity';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class AdminSupportTicketsService {
@@ -13,6 +14,7 @@ export class AdminSupportTicketsService {
         private readonly ticketRepository: Repository<SupportTicket>,
         @InjectRepository(User)
         private readonly userRepository: Repository<User>,
+        private readonly notificationsService: NotificationsService,
     ) { }
 
     async getAllTickets() {
@@ -102,10 +104,26 @@ export class AdminSupportTicketsService {
         try {
             this.logger.log('Adding response to ticket', { ticketId });
 
+            // Get ticket before updating to get userId
+            const ticket = await this.ticketRepository.findOne({ where: { id: ticketId } });
+            if (!ticket) {
+                this.logger.warn('Ticket not found', { ticketId });
+                throw new Error('Ticket not found');
+            }
+
             await this.ticketRepository.update(ticketId, {
                 response,
                 status: 'in-progress',
             });
+
+            // Create notification for user
+            await this.notificationsService.createNotification(
+                ticket.userId,
+                'Support Ticket Response',
+                `Your support ticket "${ticket.subject}" has been updated. The admin has provided a response.`,
+                'ticket_update',
+                ticketId,
+            );
 
             const updatedTicket = await this.getTicketById(ticketId);
             this.logger.log('Response added to ticket', { ticketId });
