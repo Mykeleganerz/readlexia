@@ -13,6 +13,7 @@ import { AdminModule } from './admin/admin.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { validate } from './common/config/env.validation';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
+import { SeederService } from './admin/seeder.service';
 
 @Module({
   imports: [
@@ -42,7 +43,7 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
     NotificationsModule,
   ],
   controllers: [AppController],
-  providers: [AppService, HelpContentService],
+  providers: [AppService, HelpContentService, SeederService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
