@@ -23,6 +23,12 @@ export class HelpContent {
     @Column({ default: 0 })
     order: number;
 
+    @Column({ nullable: true })
+    videoUrl: string;
+
+    @Column({ default: false })
+    isPublished: boolean;
+
     @CreateDateColumn()
     createdAt: Date;
 

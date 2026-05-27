@@ -7,6 +7,8 @@ export interface HelpContent {
     content: string;
     category: string;
     order: number;
+    videoUrl?: string;
+    isPublished: boolean;
     createdAt: string;
     updatedAt: string;
 }

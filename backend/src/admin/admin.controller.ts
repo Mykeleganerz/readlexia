@@ -130,7 +130,7 @@ export class AdminController {
 
     @Post('help-content')
     async createHelpContent(
-        @Body() body: { title: string; content: string; category: string; order?: number },
+        @Body() body: { title: string; content: string; category: string; order?: number; videoUrl?: string; isPublished?: boolean },
     ) {
         try {
             this.logger.log('POST /admin/help-content', body);
@@ -139,6 +139,8 @@ export class AdminController {
                 body.content,
                 body.category,
                 body.order,
+                body.videoUrl,
+                body.isPublished,
             );
         } catch (error) {
             this.logger.error('Failed to create help content', error);

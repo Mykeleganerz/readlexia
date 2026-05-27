@@ -2,9 +2,17 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Navigation } from '../components/Navigation';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { BookOpen, Plus, Edit2, Trash2 } from 'lucide-react';
+import {
+  BookOpen,
+  Plus,
+  Edit2,
+  Trash2,
+  Video,
+  AlertCircle,
+} from 'lucide-react';
 import { errorLogger, errorNotificationManager } from '../../utils/errorLogger';
 import apiClient from '../../services/api.service';
+import { isValidYouTubeUrl } from '../../utils/youtubeHelper';
 
 interface HelpContent {
   id: number;
@@ -12,6 +20,8 @@ interface HelpContent {
   content: string;
   category: string;
   order: number;
+  videoUrl?: string;
+  isPublished: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -24,11 +34,14 @@ export function AdminHelpManagement() {
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [videoUrlError, setVideoUrlError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
     category: 'General',
     order: 0,
+    videoUrl: '',
+    isPublished: false,
   });
 
   if (user?.role !== 'admin') {
@@ -62,14 +75,27 @@ export function AdminHelpManagement() {
   };
 
   const resetForm = () => {
-    setFormData({ title: '', content: '', category: 'General', order: 0 });
+    setFormData({
+      title: '',
+      content: '',
+      category: 'General',
+      order: 0,
+      videoUrl: '',
+      isPublished: false,
+    });
     setEditingId(null);
     setShowForm(false);
+    setVideoUrlError(null);
   };
 
   const handleSave = async () => {
     if (!formData.title.trim() || !formData.content.trim()) {
-      errorNotificationManager.warning('Please fill in all fields');
+      errorNotificationManager.warning('Please fill in title and content');
+      return;
+    }
+
+    if (formData.videoUrl && !isValidYouTubeUrl(formData.videoUrl)) {
+      setVideoUrlError('Invalid YouTube URL format');
       return;
     }
 
@@ -114,6 +140,8 @@ export function AdminHelpManagement() {
       content: content.content,
       category: content.category,
       order: content.order,
+      videoUrl: content.videoUrl || '',
+      isPublished: content.isPublished,
     });
     setEditingId(content.id);
     setShowForm(true);
@@ -192,22 +220,40 @@ export function AdminHelpManagement() {
                     <div key={content.id} className="p-4 hover:bg-gray-50">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <h3 className="font-semibold text-gray-800">
-                            {content.title}
-                          </h3>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-semibold text-gray-800">
+                              {content.title}
+                            </h3>
+                            {content.videoUrl && (
+                              <Video
+                                size={16}
+                                className="text-purple-600"
+                                title="Video attached"
+                              />
+                            )}
+                          </div>
                           <p className="text-sm text-gray-600 line-clamp-2">
                             {content.content}
                           </p>
-                          <div className="flex gap-2 mt-2">
+                          <div className="flex gap-2 mt-2 flex-wrap">
                             <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
                               {content.category}
+                            </span>
+                            <span
+                              className={`px-2 py-1 text-xs rounded ${
+                                content.isPublished
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-yellow-100 text-yellow-800'
+                              }`}
+                            >
+                              {content.isPublished ? 'Published' : 'Draft'}
                             </span>
                             <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded">
                               Order: {content.order}
                             </span>
                           </div>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 ml-2">
                           <button
                             onClick={() => handleEdit(content)}
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded"
@@ -303,11 +349,54 @@ export function AdminHelpManagement() {
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        order: parseInt(e.target.value),
+                        order: parseInt(e.target.value) || 0,
                       })
                     }
                     className="w-full px-3 py-2 border rounded-lg text-sm"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    YouTube Video URL (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.videoUrl}
+                    onChange={(e) => {
+                      setFormData({ ...formData, videoUrl: e.target.value });
+                      setVideoUrlError(null);
+                    }}
+                    placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..."
+                    className="w-full px-3 py-2 border rounded-lg text-sm"
+                  />
+                  {videoUrlError && (
+                    <p className="flex items-center gap-1 text-red-600 text-xs mt-1">
+                      <AlertCircle size={14} /> {videoUrlError}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={formData.isPublished}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          isPublished: e.target.checked,
+                        })
+                      }
+                      className="w-4 h-4 rounded"
+                    />
+                    Published
+                  </label>
+                  <p className="text-xs text-gray-600 mt-1">
+                    {formData.isPublished
+                      ? 'Visible to users'
+                      : 'Draft - hidden from users'}
+                  </p>
                 </div>
 
                 <div>

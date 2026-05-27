@@ -60,7 +60,22 @@ export class AdminHelpContentService {
         }
     }
 
-    async createHelpContent(title: string, content: string, category: string, order = 0) {
+    async getPublishedHelpContent() {
+        try {
+            this.logger.log('Fetching published help content');
+            const content = await this.helpContentRepository.find({
+                where: { isPublished: true },
+                order: { order: 'ASC', createdAt: 'DESC' },
+            });
+            this.logger.log('Published help content retrieved', { count: content.length });
+            return content;
+        } catch (error) {
+            this.logger.error('Failed to get published help content', error);
+            throw error;
+        }
+    }
+
+    async createHelpContent(title: string, content: string, category: string, order = 0, videoUrl?: string, isPublished = false) {
         try {
             this.logger.log('Creating help content', { title, category });
 
@@ -69,6 +84,8 @@ export class AdminHelpContentService {
                 content,
                 category,
                 order,
+                videoUrl: videoUrl || null,
+                isPublished,
             });
 
             const savedContent = await this.helpContentRepository.save(helpContent);
