@@ -10,6 +10,7 @@ import {
   LogOut,
   Shield,
   Bell,
+  BookMarked,
 } from 'lucide-react';
 
 export function Navigation() {
@@ -64,6 +65,18 @@ export function Navigation() {
           >
             <FileText size={20} />
             <span>Documents</span>
+          </Link>
+
+          <Link
+            to="/exercises"
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+              isActive('/exercises')
+                ? 'bg-blue-100 text-blue-700'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            <BookMarked size={20} />
+            <span>Exercises</span>
           </Link>
 
           <Link

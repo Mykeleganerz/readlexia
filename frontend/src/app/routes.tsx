@@ -18,6 +18,7 @@ import { AdminHelpManagement } from './pages/AdminHelpManagement';
 import { ExerciseSelector } from './pages/ExerciseSelector';
 import { ExercisePage } from './pages/ExercisePage';
 import { ExerciseResults } from './pages/ExerciseResults';
+import { Exercises } from './pages/Exercises';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 export const router = createBrowserRouter([
@@ -86,6 +87,14 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <DocumentView />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/exercises',
+    element: (
+      <ProtectedRoute>
+        <Exercises />
       </ProtectedRoute>
     ),
   },
