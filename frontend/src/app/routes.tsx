@@ -9,6 +9,7 @@ import { Profile } from './pages/Profile';
 import { Settings } from './pages/Settings';
 import { Help } from './pages/Help';
 import { Notifications } from './pages/Notifications';
+import { UserSupportTicket } from './pages/UserSupportTicket';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { AdminUserManagement } from './pages/AdminUserManagement';
 import { AdminAnalytics } from './pages/AdminAnalytics';
@@ -145,6 +146,14 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <Notifications />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/user/support-tickets/:ticketId',
+    element: (
+      <ProtectedRoute>
+        <UserSupportTicket />
       </ProtectedRoute>
     ),
   },
