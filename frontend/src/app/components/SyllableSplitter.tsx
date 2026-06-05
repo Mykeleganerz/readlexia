@@ -204,20 +204,31 @@ export function SyllableSplitter({ text }: SyllableSplitterProps) {
     return <>{text}</>;
   }
 
-  const words = text.split(' ');
+  // Split by any whitespace (spaces, tabs, newlines, etc.) while preserving the whitespace
+  const parts = text.split(/(\s+)/);
 
   return (
     <>
-      {words.map((word, wordIndex) => {
-        // Only split complex words (more than 7 characters)
-        if (word.length <= 7) {
-          return <span key={wordIndex}>{word} </span>;
+      {parts.map((part, partIndex) => {
+        // Preserve whitespace as-is
+        if (/^\s+$/.test(part)) {
+          return <span key={partIndex}>{part}</span>;
         }
 
-        const syllables = splitIntoSyllables(word);
+        // Skip empty parts
+        if (part.length === 0) {
+          return null;
+        }
+
+        // Only split complex words (more than 7 characters)
+        if (part.length <= 7) {
+          return <span key={partIndex}>{part}</span>;
+        }
+
+        const syllables = splitIntoSyllables(part);
 
         return (
-          <span key={wordIndex} className="inline-block">
+          <span key={partIndex} className="inline-block">
             {syllables.map((syllable, syllableIndex) => (
               <span
                 key={syllableIndex}
@@ -237,7 +248,6 @@ export function SyllableSplitter({ text }: SyllableSplitterProps) {
                 )}
               </span>
             ))}
-            <span> </span>
           </span>
         );
       })}
