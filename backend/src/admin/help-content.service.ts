@@ -14,8 +14,9 @@ export class HelpContentService {
 
     async getAllHelpContent() {
         try {
-            this.logger.log('Fetching all help content');
+            this.logger.log('Fetching all published help content');
             const content = await this.helpContentRepository.find({
+                where: { isPublished: true },
                 order: { order: 'ASC', createdAt: 'DESC' },
             });
             this.logger.log('Help content retrieved', { count: content.length });
@@ -30,7 +31,7 @@ export class HelpContentService {
         try {
             this.logger.log('Fetching help content by ID', { contentId });
             const content = await this.helpContentRepository.findOne({
-                where: { id: contentId },
+                where: { id: contentId, isPublished: true },
             });
 
             if (!content) {
@@ -46,9 +47,9 @@ export class HelpContentService {
 
     async getHelpContentByCategory(category: string) {
         try {
-            this.logger.log('Fetching help content by category', { category });
+            this.logger.log('Fetching published help content by category', { category });
             const content = await this.helpContentRepository.find({
-                where: { category },
+                where: { category, isPublished: true },
                 order: { order: 'ASC' },
             });
             this.logger.log('Help content retrieved', { count: content.length });

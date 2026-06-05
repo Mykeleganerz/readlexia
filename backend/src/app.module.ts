@@ -28,7 +28,7 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
       password: process.env.DB_PASSWORD || '',
       database: process.env.DB_DATABASE || 'readlexia',
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: process.env.NODE_ENV !== 'production', // IMPORTANT: false in production
+      synchronize: true,
       logging: process.env.NODE_ENV === 'development',
       retryAttempts: 5,
       retryDelay: 3000,
