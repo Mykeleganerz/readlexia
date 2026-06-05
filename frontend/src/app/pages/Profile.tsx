@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Navigation } from '../components/Navigation';
 import { User, Mail, Save } from 'lucide-react';
+import { usersService } from '../../services/users.service';
 
 export function Profile() {
   const { user, updateProfile } = useAuth();
@@ -10,19 +11,77 @@ export function Profile() {
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (!user) {
       navigate('/login');
+    } else {
+      // Pre-fill fields with current user data
+      setName(user.name);
+      setEmail(user.email);
     }
   }, [user, navigate]);
 
   if (!user) return null;
 
-  const handleSave = () => {
-    updateProfile({ name, email });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+  const validateEmail = (emailValue: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(emailValue);
+  };
+
+  const handleSave = async () => {
+    setError('');
+    setSaved(false);
+
+    // Validation
+    if (!name.trim()) {
+      setError('Full Name cannot be empty');
+      return;
+    }
+
+    if (!email.trim()) {
+      setError('Email cannot be empty');
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Call the API to update the user
+      await usersService.update(user.id, {
+        name: name.trim(),
+        email: email.trim(),
+      });
+
+      // Update the context to reflect the changes in the navbar
+      updateProfile({
+        name: name.trim(),
+        email: email.trim(),
+      });
+
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err: any) {
+      console.error('Failed to update profile:', err);
+
+      // Handle specific error responses
+      if (err.response?.status === 409) {
+        setError('This email address is already in use');
+      } else if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('Failed to update profile. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -77,11 +136,18 @@ export function Profile() {
 
             <button
               onClick={handleSave}
-              className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              disabled={isLoading}
+              className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Save size={20} />
-              Save Changes
+              {isLoading ? 'Saving...' : 'Save Changes'}
             </button>
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                {error}
+              </div>
+            )}
 
             {saved && (
               <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
