@@ -90,27 +90,6 @@ export function Profile() {
             )}
           </div>
         </div>
-
-        {/* Account Stats */}
-        <div className="bg-white rounded-xl shadow-lg p-8">
-          <h3 className="text-xl font-bold text-gray-800 mb-6">
-            Account Statistics
-          </h3>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-3xl font-bold text-blue-600 mb-1">24</div>
-              <div className="text-gray-600">Documents Read</div>
-            </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-3xl font-bold text-green-600 mb-1">156</div>
-              <div className="text-gray-600">Reading Hours</div>
-            </div>
-            <div className="text-center p-4 bg-purple-50 rounded-lg">
-              <div className="text-3xl font-bold text-purple-600 mb-1">89%</div>
-              <div className="text-gray-600">Completion Rate</div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
