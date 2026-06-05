@@ -5,14 +5,11 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [
-    // The React and Tailwind plugins are both required for Make, even if
-    // Tailwind is not being actively used – do not remove them
     react(),
     tailwindcss(),
   ],
   resolve: {
     alias: {
-      // Alias @ to the src directory
       '@': path.resolve(__dirname, './src'),
     },
   },
@@ -21,7 +18,10 @@ export default defineConfig({
     host: true,
     cors: true,
   },
-
-  // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
+  preview: {
+    host: '0.0.0.0',
+    port: 4173,
+    allowedHosts: ['readlexia-production-a0cc.up.railway.app']
+  },
   assetsInclude: ['**/*.svg', '**/*.csv'],
 })
